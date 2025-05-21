@@ -10,14 +10,18 @@ form.addEventListener("submit", async (e) => {
   addMessage(userText, "user");
   input.value = "";
 
-  const res = await fetch("/twinbot", {
-    method: "POST",
-    headers: { "Content-Type": "text/plain" },
-    body: userText,
-  });
+  try {
+    const res = await fetch("/twinbot", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: userText }),
+    });
 
-  const data = await res.json();
-  addMessage(data.reply, "bot");
+    const data = await res.json();
+    addMessage(data.reply, "bot");
+  } catch (err) {
+    addMessage("Oops, something went wrong talking to my twin brain.", "bot");
+  }
 });
 
 function addMessage(text, sender) {
