@@ -1,42 +1,39 @@
-const fs = require("fs");
 const { Configuration, OpenAIApi } = require("openai");
+const fs = require("fs");
+require("dotenv").config();
 
 const configuration = new Configuration({
   apiKey: process.env.OPENAI_API_KEY,
 });
+
 const openai = new OpenAIApi(configuration);
 
-const memoryFile = "memory.json";
-
-// Load memory
+// Load memory from file
 let memory = [];
-if (fs.existsSync(memoryFile)) {
-  try {
-    const data = fs.readFileSync(memoryFile, "utf8");
-    memory = JSON.parse(data);
-  } catch (error) {
-    console.error("Error reading memory:", error);
-  }
+try {
+  const memoryData = fs.readFileSync("memory.json", "utf8");
+  memory = JSON.parse(memoryData);
+} catch (err) {
+  console.error("Failed to load memory.json:", err);
 }
 
-// Save memory to disk
-const saveMemory = () => {
-  try {
-    fs.writeFileSync(memoryFile, JSON.stringify(memory, null, 2));
-  } catch (error) {
-    console.error("Error saving memory:", error);
-  }
-};
+// Save to memory file
+function saveMemory() {
+  fs.writeFileSync("memory.json", JSON.stringify(memory, null, 2));
+}
 
-async function askTwinBot(userMessage) {
-  memory.push({ role: "user", content: userMessage });
+async function askTwinBot(message) {
+  memory.push({ role: "user", content: message });
 
-  const response = await openai.createChatCompletion({
-    model: "gpt-3.5-turbo", // or "gpt-4" if you're using GPT-4
-    messages: memory,
+  const completion = await openai.createChatCompletion({
+    model: "gpt-3.5-turbo",
+    messages: [
+      { role: "system", content: "You're TwinBot, a supportive personal AI." },
+      ...memory,
+    ],
   });
 
-  const reply = response.data.choices[0].message.content.trim();
+  const reply = completion.data.choices[0].message.content;
   memory.push({ role: "assistant", content: reply });
 
   saveMemory();
