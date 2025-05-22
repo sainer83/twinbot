@@ -1,23 +1,19 @@
-const { Configuration, OpenAIApi } = require("openai");
 const fs = require("fs");
+const { OpenAI } = require("openai");
 require("dotenv").config();
 
-const configuration = new Configuration({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-const openai = new OpenAIApi(configuration);
-
-// Load memory from file
+// Load memory
 let memory = [];
 try {
-  const memoryData = fs.readFileSync("memory.json", "utf8");
-  memory = JSON.parse(memoryData);
+  const data = fs.readFileSync("memory.json", "utf8");
+  memory = JSON.parse(data);
 } catch (err) {
-  console.error("Failed to load memory.json:", err);
+  console.warn("Could not load memory.json, starting fresh:", err.message);
 }
 
-// Save to memory file
+// Save memory
 function saveMemory() {
   fs.writeFileSync("memory.json", JSON.stringify(memory, null, 2));
 }
@@ -25,17 +21,16 @@ function saveMemory() {
 async function askTwinBot(message) {
   memory.push({ role: "user", content: message });
 
-  const completion = await openai.createChatCompletion({
-    model: "gpt-3.5-turbo",
+  const chatCompletion = await openai.chat.completions.create({
+    model: "gpt-4o",
     messages: [
-      { role: "system", content: "You're TwinBot, a supportive personal AI." },
+      { role: "system", content: "You're TwinBot, a supportive, emotionally-aware personal AI." },
       ...memory,
     ],
   });
 
-  const reply = completion.data.choices[0].message.content;
+  const reply = chatCompletion.choices[0].message.content;
   memory.push({ role: "assistant", content: reply });
-
   saveMemory();
 
   return reply;
