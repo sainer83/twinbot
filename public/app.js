@@ -1,6 +1,7 @@
 const chat = document.getElementById("chat");
 const form = document.getElementById("chat-form");
 const input = document.getElementById("user-input");
+const micButton = document.getElementById("mic-button");
 
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
@@ -16,11 +17,11 @@ form.addEventListener("submit", async (e) => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ message: userText }),
     });
-
     const data = await res.json();
     addMessage(data.reply, "bot");
   } catch (err) {
     addMessage("Oops, something went wrong talking to my twin brain.", "bot");
+    console.error(err);
   }
 });
 
@@ -30,4 +31,31 @@ function addMessage(text, sender) {
   msg.innerText = text;
   chat.appendChild(msg);
   chat.scrollTop = chat.scrollHeight;
+}
+
+// Speech recognition (Web Speech API)
+if ("webkitSpeechRecognition" in window || "SpeechRecognition" in window) {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const recognition = new SpeechRecognition();
+  recognition.lang = "en-US";
+  recognition.continuous = false;
+
+  micButton.addEventListener("click", () => {
+    recognition.start();
+  });
+
+  recognition.onresult = (event) => {
+    const transcript = event.results[0][0].transcript;
+    input.value = transcript;
+    form.dispatchEvent(new Event("submit"));
+  };
+
+  recognition.onerror = (event) => {
+    console.error("Speech recognition error:", event.error);
+    addMessage("Mic error. Try again or type it out.", "bot");
+  };
+} else {
+  micButton.disabled = true;
+  micButton.innerText = "X";
+  addMessage("Mic not supported in this browser.", "bot");
 }
