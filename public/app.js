@@ -22,12 +22,13 @@ form.addEventListener("submit", async (e) => {
         addMessage(data.reply, "bot");
 
         const ttsRes = await fetch("/speak", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ text: data.reply }),
-        });
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ text: data }),
+});
 
         const audioBlob = await ttsRes.blob();
+if (!ttsRes.ok) throw new Error("TTS failed");
         const audioUrl = URL.createObjectURL(audioBlob);
         const audio = new Audio(audioUrl);
         audio.play();
