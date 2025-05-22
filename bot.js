@@ -6,11 +6,13 @@ const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 // Load memory
 let memory = [];
+
 try {
-  const data = fs.readFileSync("memory.json", "utf8");
-  memory = JSON.parse(data);
+  const memoryRaw = fs.readFileSync("memory.json", "utf8");
+  const parsed = JSON.parse(memoryRaw);
+  memory = Array.isArray(parsed) ? parsed : [];
 } catch (err) {
-  console.warn("Could not load memory.json, starting fresh:", err.message);
+  console.warn("Could not read memory.json. Starting fresh.");
 }
 
 // Save memory
