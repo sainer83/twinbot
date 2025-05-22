@@ -1,15 +1,19 @@
 const express = require("express");
 const cors = require("cors");
-const app = express();
-const askTwinBot = require("./bot");
+const fs = require("fs");
 require("dotenv").config();
-const PORT = 3000;
+
+const { askTwinBot, speakText } = require("./bot");
+
+const app = express();
+const PORT = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
 app.use(express.text());
 app.use(express.static("public"));
 
+// Handle incoming messages and return AI response
 app.post("/twinbot", async (req, res) => {
   const userMessage = typeof req.body === "string" ? req.body : req.body.message;
 
@@ -17,10 +21,36 @@ app.post("/twinbot", async (req, res) => {
     return res.status(400).json({ error: "No message provided." });
   }
 
-  const botReply = await askTwinBot(userMessage);
-  res.json({ reply: botReply });
+  try {
+    const botReply = await askTwinBot(userMessage);
+    res.json({ reply: botReply });
+  } catch (err) {
+    console.error("Error generating TwinBot reply:", err);
+    res.status(500).json({ error: "Failed to generate reply." });
+  }
 });
 
-app.listen(PORT, '0.0.0.0', () => {
+// Handle text-to-speech
+app.post("/speak", async (req, res) => {
+  const { text } = req.body;
+
+  if (!text) {
+    return res.status(400).json({ error: "No text provided for TTS." });
+  }
+
+  try {
+    const audioBuffer = await speakText(text);
+    res.set({
+      "Content-Type": "audio/mpeg",
+      "Content-Length": audioBuffer.length,
+    });
+    res.send(audioBuffer);
+  } catch (err) {
+    console.error("Error generating speech:", err);
+    res.status(500).json({ error: "Failed to generate speech." });
+  }
+});
+
+app.listen(PORT, "0.0.0.0", () => {
   console.log(`TwinBot is listening at http://localhost:${PORT}`);
 });
