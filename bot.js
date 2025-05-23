@@ -27,22 +27,36 @@ async function askTwinBot(message) {
 }
 
 async function speakText(text) {
-  const response = await axios({
-    method: "POST",
-    url: `https://api.elevenlabs.io/v1/text-to-speech/${process.env.ELEVENLABS_VOICE_ID}`,
-    headers: {
-      "xi-api-key": process.env.ELEVENLABS_API_KEY,
-      "Content-Type": "application/json",
-    },
-    responseType: "arraybuffer",
-    data: {
-      text,
-      model_id: "eleven_multilingual_v2",
-      voice_settings: {
-        stability: 0.5,
-        similarity_boost: 0.5,
+  try {
+    const response = await axios({
+      method: "POST",
+      url: `https://api.elevenlabs.io/v1/text-to-speech/${process.env.ELEVENLABS_VOICE_ID}`,
+      headers: {
+        "xi-api-key": process.env.ELEVENLABS_API_KEY,
+        "Content-Type": "application/json"
       },
-    },
+      responseType: "stream", // stream the audio instead of buffering the whole thing first
+      data: {
+        text,
+        model_id: "eleven_multilingual_v2",
+        voice_settings: {
+          stability: 0.75,
+          similarity_boost: 0.2,
+        },
+      }
+    });
+
+    let audioChunks = [];
+    for await (const chunk of response.data) {
+      audioChunks.push(chunk);
+    }
+
+    return Buffer.concat(audioChunks); // return complete buffer once streaming ends
+  } catch (error) {
+    console.error("TTS error:", error?.response?.data || error.message);
+    throw error;
+  }
+}
   });
 
   console.log("TTS response buffer size:", response.data.length);
