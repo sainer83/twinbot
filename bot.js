@@ -43,7 +43,7 @@ async function speakText(text) {
           stability: 0.75,
           similarity_boost: 0.2,
         },
-      }
+      },
     });
 
     let audioChunks = [];
