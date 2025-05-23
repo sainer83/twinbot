@@ -13,7 +13,7 @@ app.use(express.json());
 app.use(express.text());
 app.use(express.static("public"));
 
-// Handle incoming messages and return AI response
+// Handle incoming chat messages
 app.post("/twinbot", async (req, res) => {
   const userMessage = typeof req.body === "string" ? req.body : req.body.message;
 
@@ -33,10 +33,11 @@ app.post("/twinbot", async (req, res) => {
 // Handle text-to-speech
 app.post("/speak", async (req, res) => {
   const { text } = req.body;
-
   if (!text) {
     return res.status(400).json({ error: "No text provided for TTS." });
   }
+
+  console.log("Received text to speak:", text);
 
   try {
     const audioBuffer = await speakText(text);
