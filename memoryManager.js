@@ -6,7 +6,8 @@ let memory = [];
 function loadMemory() {
   try {
     const raw = fs.readFileSync(path, "utf8");
-    memory = JSON.parse(raw);
+    const parsed = JSON.parse(raw);
+    memory = Array.isArray(parsed) ? parsed : [];
   } catch {
     memory = [];
   }
